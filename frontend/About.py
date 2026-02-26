@@ -36,7 +36,7 @@ def show():
             border: 2px solid rgba(255, 255, 255, 0.2);
         }
         
-        .team-card {
+        .stat-card {
             background: rgba(255, 255, 255, 0.15);
             border-radius: 20px;
             padding: 25px;
@@ -45,9 +45,20 @@ def show():
             transition: all 0.3s;
         }
         
-        .team-card:hover {
+        .stat-card:hover {
             transform: translateY(-10px);
             border-color: #00ff9d;
+        }
+        
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #00ff9d;
+        }
+        
+        .stat-label {
+            color: white;
+            font-size: 14px;
         }
         
         .feature-list {

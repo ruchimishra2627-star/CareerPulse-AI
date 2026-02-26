@@ -78,25 +78,29 @@ def show():
             padding-bottom: 1.5rem;
         }
         
+        /* ✅ FIXED - BLACK TEXT INPUTS */
         .stTextInput > div > div > input {
             border-radius: 12px !important;
             border: 2px solid #e0e0e0 !important;
             padding: 12px 20px !important;
             font-size: 1rem !important;
             transition: all 0.3s ease !important;
-            background: #f8f9fa !important;
+            background: #ffffff !important;
+            color: #000000 !important;  /* 👈 BLACK TEXT */
             margin: 5px 0 !important;
+        }
+        
+        .stTextInput > div > div > input::placeholder {
+            color: #666666 !important;  /* 👈 DARK GRAY PLACEHOLDER */
+            font-style: italic;
+            opacity: 0.8;
         }
         
         .stTextInput > div > div > input:focus {
             border-color: #667eea !important;
             box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1) !important;
-            background: white !important;
-        }
-        
-        .stTextInput > div > div > input::placeholder {
-            color: #999 !important;
-            font-style: italic;
+            background: #ffffff !important;
+            color: #000000 !important;  /* 👈 BLACK TEXT ON FOCUS */
         }
         
         .stCheckbox {

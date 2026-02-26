@@ -80,12 +80,6 @@ def show():
             border-left: 5px solid #00ff9d;
         }
         
-        .metric-highlight {
-            font-size: 24px;
-            color: #00ff9d;
-            font-weight: bold;
-        }
-        
         .stButton > button {
             background: linear-gradient(135deg, #667eea, #764ba2) !important;
             color: white !important;
@@ -115,6 +109,22 @@ def show():
     
     st.markdown("<h1 style='text-align: center;'>📊 Advanced Analytics</h1>", unsafe_allow_html=True)
     
+    # Introduction Section
+    with st.expander("ℹ️ What is Analytics Page? (Click to learn)"):
+        st.markdown("""
+        <div style="background:rgba(102,126,234,0.3); border-left:5px solid #00ff9d; border-radius:10px; padding:15px; color:white;">
+            <h3>🎯 Purpose of Analytics:</h3>
+            <p>This page analyzes your <b>prediction history</b> to show:</p>
+            <ul>
+                <li>📈 <b>Progress over time</b> - Are you improving?</li>
+                <li>📊 <b>Domain preferences</b> - Which career paths you explore</li>
+                <li>⚠️ <b>Risk patterns</b> - Your consistency</li>
+                <li>💡 <b>Smart insights</b> - What to focus on</li>
+            </ul>
+            <p>Use this data to understand your strengths and weaknesses!</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
     # Generate or get history data
     if 'history_data' not in st.session_state or len(st.session_state.history_data) == 0:
         # Create sample data for analytics
@@ -135,9 +145,7 @@ def show():
                 "date": date.strftime("%Y-%m-%d"),
                 "domain": random.choice(domains),
                 "probability": prob,
-                "risk": risk,
-                "cgpa": round(random.uniform(6.5, 9.5), 1),
-                "skills": random.randint(50, 95)
+                "risk": risk
             })
         
         df = pd.DataFrame(history_data)
@@ -226,7 +234,7 @@ def show():
     
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Main Chart
+    # Main Chart - FIXED VERSION
     st.markdown('<div class="analytics-card">', unsafe_allow_html=True)
     st.markdown("### 📊 Performance Trend")
     
@@ -238,22 +246,26 @@ def show():
             title=f"Score Trend - {period}",
             markers=True
         )
+        fig.update_traces(line_color='#00ff9d', marker_color='#00ff9d')
+        
     elif chart_type == "Bar":
         fig = px.bar(
             filtered_df, 
             x=filtered_df.index, 
             y='probability',
-            title=f"Score Distribution - {period}"
+            title=f"Score Distribution - {period}",
+            color_discrete_sequence=['#00ff9d']
         )
-    else:
+        
+    else:  # Area
         fig = px.area(
             filtered_df, 
             x=filtered_df.index, 
             y='probability',
-            title=f"Score Area - {period}"
+            title=f"Score Area - {period}",
+            color_discrete_sequence=['#00ff9d']
         )
     
-    fig.update_traces(line_color='#00ff9d', marker_color='#00ff9d')
     fig.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
@@ -348,20 +360,21 @@ def show():
     col1, col2 = st.columns(2)
     
     with col1:
-        best_domain = filtered_df.groupby('domain')['probability'].mean().idxmax()
-        best_score = filtered_df.groupby('domain')['probability'].mean().max()
-        st.markdown(f"""
-        <div class="insight-box">
-            <span class="metric-highlight">🏆 Best Domain</span><br>
-            <span style="color: white;">{best_domain}</span><br>
-            <span style="color: #00ff9d;">Average Score: {best_score:.1f}%</span>
-        </div>
-        """, unsafe_allow_html=True)
+        if 'domain' in filtered_df.columns:
+            best_domain = filtered_df.groupby('domain')['probability'].mean().idxmax()
+            best_score = filtered_df.groupby('domain')['probability'].mean().max()
+            st.markdown(f"""
+            <div class="insight-box">
+                <span style="color:#00ff9d; font-size:18px;">🏆 Best Domain</span><br>
+                <span style="color: white;">{best_domain}</span><br>
+                <span style="color: #00ff9d;">Average Score: {best_score:.1f}%</span>
+            </div>
+            """, unsafe_allow_html=True)
         
-        improvement_rate = (filtered_df['probability'].iloc[-1] - filtered_df['probability'].iloc[0]) / filtered_df['probability'].iloc[0] * 100 if len(filtered_df) > 1 else 0
+        improvement_rate = (filtered_df['probability'].iloc[-1] - filtered_df['probability'].iloc[0]) / filtered_df['probability'].iloc[0] * 100 if len(filtered_df) > 1 and filtered_df['probability'].iloc[0] > 0 else 0
         st.markdown(f"""
         <div class="insight-box">
-            <span class="metric-highlight">📈 Improvement Rate</span><br>
+            <span style="color:#00ff9d; font-size:18px;">📈 Improvement Rate</span><br>
             <span style="color: white;">{improvement_rate:+.1f}% overall</span><br>
             <span style="color: {'#00ff9d' if improvement_rate > 0 else '#ff4444'};">
                 {'📈 Trending Up' if improvement_rate > 0 else '📉 Needs Attention'}
@@ -373,7 +386,7 @@ def show():
         consistency = filtered_df['probability'].std()
         st.markdown(f"""
         <div class="insight-box">
-            <span class="metric-highlight">📊 Consistency</span><br>
+            <span style="color:#00ff9d; font-size:18px;">📊 Consistency</span><br>
             <span style="color: white;">Score Std Dev: {consistency:.1f}</span><br>
             <span style="color: {'#00ff9d' if consistency < 15 else '#ffbb33' if consistency < 25 else '#ff4444'};">
                 {'✨ Very Consistent' if consistency < 15 else '⚡ Moderately Variable' if consistency < 25 else '⚠️ Highly Variable'}
@@ -381,17 +394,18 @@ def show():
         </div>
         """, unsafe_allow_html=True)
         
-        risk_dist = filtered_df['risk'].value_counts()
-        primary_risk = risk_dist.index[0] if len(risk_dist) > 0 else "Unknown"
-        st.markdown(f"""
-        <div class="insight-box">
-            <span class="metric-highlight">⚠️ Primary Risk</span><br>
-            <span style="color: white;">{primary_risk}</span><br>
-            <span style="color: {'#00ff9d' if primary_risk == 'Low Risk' else '#ffbb33' if primary_risk == 'Medium Risk' else '#ff4444'};">
-                {risk_dist.get('Low Risk', 0)} Low | {risk_dist.get('Medium Risk', 0)} Medium | {risk_dist.get('High Risk', 0)} High
-            </span>
-        </div>
-        """, unsafe_allow_html=True)
+        if 'risk' in filtered_df.columns:
+            risk_dist = filtered_df['risk'].value_counts()
+            primary_risk = risk_dist.index[0] if len(risk_dist) > 0 else "Unknown"
+            st.markdown(f"""
+            <div class="insight-box">
+                <span style="color:#00ff9d; font-size:18px;">⚠️ Primary Risk</span><br>
+                <span style="color: white;">{primary_risk}</span><br>
+                <span style="color: {'#00ff9d' if primary_risk == 'Low Risk' else '#ffbb33' if primary_risk == 'Medium Risk' else '#ff4444'};">
+                    {risk_dist.get('Low Risk', 0)} Low | {risk_dist.get('Medium Risk', 0)} Medium | {risk_dist.get('High Risk', 0)} High
+                </span>
+            </div>
+            """, unsafe_allow_html=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
     
@@ -408,10 +422,10 @@ def show():
     else:
         recommendations.append("🟢 **Excellent**: You're performing great! Consider exploring advanced topics.")
     
-    if improvement_rate < 0:
+    if 'improvement_rate' in locals() and improvement_rate < 0:
         recommendations.append("📉 **Trend Alert**: Your scores are declining. Review your recent strategies.")
     
-    if consistency > 20:
+    if 'consistency' in locals() and consistency > 20:
         recommendations.append("🎯 **Consistency**: Work on maintaining steady performance across all areas.")
     
     if 'domain' in filtered_df.columns:
@@ -419,7 +433,7 @@ def show():
         recommendations.append(f"💪 **Focus Area**: Consider improving in {weakest_domain} domain.")
     
     for rec in recommendations:
-        st.markdown(f"<div class='insight-box'>{rec}</div>", unsafe_allow_html=True)
+        st.markdown(f'<div class="insight-box">{rec}</div>', unsafe_allow_html=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
     

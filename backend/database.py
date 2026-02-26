@@ -1,54 +1,60 @@
 import hashlib
-
-# Simple dictionary to store users (persists in memory)
-users_database = {}
+import json
+import os
+from datetime import datetime
 
 class Database:
     def __init__(self):
-        global users_database
-        self.users = users_database
+        self.db_file = 'users_data.json'
+        self.users = self.load_users()
         print(f"✅ Database Ready! Total users: {len(self.users)}")
+    
+    def load_users(self):
+        if os.path.exists(self.db_file):
+            try:
+                with open(self.db_file, 'r') as f:
+                    return json.load(f)
+            except:
+                return {}
+        return {}
+    
+    def save_users(self):
+        try:
+            with open(self.db_file, 'w') as f:
+                json.dump(self.users, f, indent=4)
+            return True
+        except:
+            return False
     
     def hash_password(self, password):
         return hashlib.sha256(password.encode()).hexdigest()
     
     def register_user(self, name, email, password):
-        global users_database
-        # Check if email already exists
-        if email in users_database:
+        if email in self.users:
             return False, "❌ Email already exists!"
         
-        # Register new user
-        users_database[email] = {
+        self.users[email] = {
             'name': name,
             'email': email,
-            'password': self.hash_password(password)
+            'password': self.hash_password(password),
+            'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
-        print(f"✅ Registered: {email}")
-        print(f"📊 Total users: {len(users_database)}")
-        return True, "✅ Registration successful!"
+        
+        if self.save_users():
+            print(f"✅ Registered: {email}")
+            return True, "✅ Registration successful!"
+        else:
+            return False, "❌ Error saving data!"
     
     def login_user(self, email, password):
-        # Check if user exists
         if email not in self.users:
             return False, "❌ Email not registered! Please create an account."
         
-        # Check password
         if self.users[email]['password'] != self.hash_password(password):
             return False, "❌ Incorrect password! Please try again."
         
-        # Login successful
         print(f"✅ Login successful: {email}")
         return True, self.users[email]
     
-    def get_all_users(self):
-        """Get list of all registered emails"""
-        return list(self.users.keys())
-    
-    def get_user_count(self):
-        """Get total number of users"""
-        return len(self.users)
-    
     def close(self):
-        print("👋 Database connection closed")
         pass
